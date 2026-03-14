@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import useStore from '../store/useStore'
+import useStore from '../store'
 import { TRENDS, PLATFORM_STATS, PLATFORMS } from '../data/appData'
 
 export default function Dashboard() {

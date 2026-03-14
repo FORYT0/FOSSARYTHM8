@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import useStore from '../store/useStore'
+import useStore from '../store'
 
 const NAV = [
   { to:'/dashboard', icon:'◈', label:'Dashboard' },

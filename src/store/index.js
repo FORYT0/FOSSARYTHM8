@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 const PALETTES = [
   { name: 'VOID BLACK',    bg: '#080808', bg2: '#111111', bg3: '#1a1a1a', tx: '#e8e8e8', ac: '#ffffff', br: '#1e1e1e' },
@@ -88,41 +89,62 @@ const ANALYTICS = {
   ],
 }
 
-export const useStore = create((set, get) => ({
-  paletteIdx: 0,
-  palette: PALETTES[0],
-  posts: INITIAL_POSTS,
-  trends: TRENDS_DATA,
-  analytics: ANALYTICS,
-  chatHistory: [],
-  selectedPost: null,
-  selectedTrend: null,
-  analyticsRange: 'weekly',
+export const useStore = create(
+  persist(
+    (set, get) => ({
+      paletteIdx: 0,
+      palette: PALETTES[0],
+      posts: INITIAL_POSTS,
+      trends: TRENDS_DATA,
+      analytics: ANALYTICS,
+      chatHistory: [],
+      selectedPost: null,
+      selectedTrend: null,
+      analyticsRange: 'weekly',
+      notifications: [
+        { id:1, type:'hot',  msg:'TikTok #SkillUnlock spiking — 18hr window remaining',  read:false, time:'2m ago' },
+        { id:2, type:'warn', msg:'IG engagement dip — pivot to carousel format today',    read:false, time:'14m ago' },
+        { id:3, type:'up',   msg:'YT watch time up 22% — hook is working',                read:true,  time:'1h ago' },
+        { id:4, type:'hot',  msg:'#AINews trending on X — post thought leadership now',   read:false, time:'2h ago' },
+      ],
 
-  cyclePalette: () => {
-    const next = (get().paletteIdx + 1) % PALETTES.length
-    set({ paletteIdx: next, palette: PALETTES[next] })
-  },
+      cyclePalette: () => {
+        const next = (get().paletteIdx + 1) % PALETTES.length
+        set({ paletteIdx: next, palette: PALETTES[next] })
+      },
 
-  addPost: (post) => set(s => ({
-    posts: [...s.posts, { ...post, id: Date.now(), views: 0, likes: 0 }]
-  })),
+      addPost: (post) => set(s => ({
+        posts: [...s.posts, { ...post, id: Date.now(), views: 0, likes: 0 }]
+      })),
 
-  updatePost: (id, updates) => set(s => ({
-    posts: s.posts.map(p => p.id === id ? { ...p, ...updates } : p)
-  })),
+      updatePost: (id, updates) => set(s => ({
+        posts: s.posts.map(p => p.id === id ? { ...p, ...updates } : p)
+      })),
 
-  deletePost: (id) => set(s => ({ posts: s.posts.filter(p => p.id !== id) })),
+      deletePost: (id) => set(s => ({ posts: s.posts.filter(p => p.id !== id) })),
 
-  setSelectedPost: (post) => set({ selectedPost: post }),
+      setSelectedPost: (post) => set({ selectedPost: post }),
 
-  setSelectedTrend: (trend) => set({ selectedTrend: trend }),
+      setSelectedTrend: (trend) => set({ selectedTrend: trend }),
 
-  setAnalyticsRange: (range) => set({ analyticsRange: range }),
+      setAnalyticsRange: (range) => set({ analyticsRange: range }),
 
-  addChatMessage: (msg) => set(s => ({ chatHistory: [...s.chatHistory, msg] })),
+      addChatMessage: (msg) => set(s => ({ chatHistory: [...s.chatHistory, msg] })),
 
-  clearChat: () => set({ chatHistory: [] }),
-}))
+      clearChat: () => set({ chatHistory: [] }),
+
+      markAllRead: () => set(s => ({ notifications: s.notifications.map(n => ({ ...n, read:true })) })),
+    }), {
+      name: 'fossarythm8-v1',
+      partialize: (s) => ({
+        paletteIdx: s.paletteIdx,
+        palette: s.palette,
+        posts: s.posts,
+        chatHistory: s.chatHistory,
+      }),
+    }
+  )
+)
 
 export { PALETTES }
+export default useStore

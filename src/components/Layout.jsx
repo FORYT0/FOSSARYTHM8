@@ -11,7 +11,7 @@ const NAV = [
   { to:'/analytics', icon:'◫', label:'Analytics' },
 ]
 
-export default function Layout() {
+export default function Layout({ children }) {
   const { palette, cyclePalette, notifications, markAllRead } = useStore()
   const [notifOpen, setNotifOpen] = useState(false)
   const location = useLocation()
@@ -88,7 +88,7 @@ export default function Layout() {
           </button>
         </header>
         <main className="content-area">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>

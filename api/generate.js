@@ -31,7 +31,7 @@ export default async function handler(req) {
     }))
 
     // Add system instruction if present
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-flash'}:generateContent?key=${apiKey}`
+    const url = `https://generativelanguage.googleapis.com/v1/models/${model || 'gemini-1.5-flash'}:generateContent?key=${apiKey}`
 
     const response = await fetch(url, {
       method: 'POST',

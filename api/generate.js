@@ -31,7 +31,7 @@ export default async function handler(req) {
     }))
 
     // Use v1beta for better model compatibility (system instructions supported)
-    const modelId = model || 'gemini-1.5-flash-latest'
+    const modelId = model || 'gemini-2.0-flash'
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`
 
     const response = await fetch(url, {

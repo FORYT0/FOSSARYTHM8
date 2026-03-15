@@ -24,7 +24,7 @@ export default function AIBrain() {
   async function callAPI(messages) {
     const res = await fetch('/api/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'gemini-1.5-flash', max_tokens:1000, system:SYS, messages }),
+      body: JSON.stringify({ model:'gemini-1.5-flash-latest', max_tokens:1000, system:SYS, messages }),
     })
     const data = await res.json()
     if (data.error) return `Error: ${data.error}`

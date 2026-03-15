@@ -22,9 +22,9 @@ export default function AIBrain() {
   useEffect(() => { if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight }, [chatHistory, loading])
 
   async function callAPI(messages) {
-    const res = await fetch('/api/claude', {
+    const res = await fetch('/api/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-3-5-sonnet-20240620', max_tokens:1000, system:SYS, messages }),
+      body: JSON.stringify({ model:'gemini-1.5-flash', max_tokens:1000, system:SYS, messages }),
     })
     const data = await res.json()
     if (data.error) return `Error: ${data.error}`

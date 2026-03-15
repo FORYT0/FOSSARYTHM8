@@ -24,7 +24,7 @@ export default function AIBrain() {
   async function callAPI(messages) {
     const res = await fetch('/api/claude', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:SYS, messages }),
+      body: JSON.stringify({ model:'claude-3-5-sonnet-20240620', max_tokens:1000, system:SYS, messages }),
     })
     const data = await res.json()
     return data.content?.[0]?.text || 'No response received.'

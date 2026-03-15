@@ -30,7 +30,11 @@ export default async function handler(req) {
       parts: [{ text: m.content }]
     }))
 
-    // Add system instruction if present
+    // Prepend system instruction to the first user message for v1 stability
+    if (system && contents.length > 0 && contents[0].role === 'user') {
+      contents[0].parts[0].text = `INSTRUCTION: ${system}\n\nMESSAGE: ${contents[0].parts[0].text}`
+    }
+
     const url = `https://generativelanguage.googleapis.com/v1/models/${model || 'gemini-1.5-flash'}:generateContent?key=${apiKey}`
 
     const response = await fetch(url, {
@@ -38,7 +42,6 @@ export default async function handler(req) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents,
-        system_instruction: system ? { parts: [{ text: system }] } : undefined,
         generationConfig: {
           maxOutputTokens: 1000,
           temperature: 0.7,

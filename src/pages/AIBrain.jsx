@@ -27,6 +27,7 @@ export default function AIBrain() {
       body: JSON.stringify({ model:'claude-3-5-sonnet-20240620', max_tokens:1000, system:SYS, messages }),
     })
     const data = await res.json()
+    if (data.error) return `Error: ${data.error}`
     return data.content?.[0]?.text || 'No response received.'
   }
 

@@ -6,6 +6,7 @@ import Trends from './pages/Trends'
 import Lineup from './pages/Lineup'
 import AIBrain from './pages/AIBrain'
 import Stats from './pages/Stats'
+import Discovery from './pages/Discovery'
 import { Studio, Settings } from './pages/StudioSettings'
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/"         element={<Dashboard />} />
         <Route path="/trends"   element={<Trends />} />
         <Route path="/studio"   element={<Studio />} />
+        <Route path="/discovery" element={<Discovery />} />
         <Route path="/lineup"   element={<Lineup />} />
         <Route path="/ai"       element={<AIBrain />} />
         <Route path="/stats"    element={<Stats />} />

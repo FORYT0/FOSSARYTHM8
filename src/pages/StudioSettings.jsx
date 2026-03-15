@@ -12,10 +12,93 @@ const STEPS=[
 ]
 
 export function Studio() {
-  const { palette:p } = useStore()
+  const { palette:p, addPost } = useStore()
   const [activeStep, setActiveStep] = React.useState(0)
+  const [topic, setTopic] = React.useState('')
+  const [loading, setLoading] = React.useState(false)
+  const [result, setResult] = React.useState(null)
+
+  async function generateContent() {
+    if (!topic.trim()) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          system: 'You are a viral social media manager. Generate a viral HOOK, a CAPTION, and 3 HASHTAGS. Format as JSON: {"hook": "...", "caption": "...", "tags": ["#a", "#b", "#c"]}',
+          messages: [{ role: 'user', content: `Topic: ${topic}` }]
+        })
+      })
+      const data = await res.json()
+      // Extract JSON from response (handling potential non-json extras)
+      const text = data.content?.[0]?.text || ''
+      const match = text.match(/\{.*\}/s)
+      if (match) setResult(JSON.parse(match[0]))
+      else setResult({ hook: 'Error parsing response', caption: text, tags: [] })
+    } catch (e) {
+      setResult({ hook: 'Error', caption: 'Failed to generate content. Check console.', tags: [] })
+    }
+    setLoading(false)
+  }
+
+  const sendToLineup = () => {
+    if (!result) return
+    addPost({
+      id: Math.random().toString(36).substr(2, 9),
+      title: result.hook,
+      day: 'MON',
+      platform: 'TT',
+      status: 'IDEA',
+      time: '12:00',
+      tags: result.tags,
+      views: 0,
+      likes: 0,
+      color: '#00b894'
+    })
+    alert('Sent to Lineup!')
+  }
+
   return (
     <div className="animate-up">
+      <Card style={{ marginBottom:10, background:`linear-gradient(135deg, ${p.bg} 0%, ${p.ac}0a 100%)`, border:`1px solid ${p.ac}22` }}>
+        <CardTitle style={{ color:p.ac, display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:18 }}>✨</span> AI Magic Bar
+        </CardTitle>
+        <div style={{ display:'flex', gap:10 }}>
+          <Input 
+            value={topic} 
+            onChange={e=>setTopic(e.target.value)} 
+            placeholder="What are we creating today? (e.g. 'A day in the life of a coder')" 
+            style={{ flex:1, border:`1px solid ${p.ac}33`, background:p.bg2 }}
+          />
+          <Button onClick={generateContent} disabled={loading} style={{ background:p.ac, boxShadow:`0 4px 14px ${p.ac}44` }}>
+            {loading ? 'Manifesting...' : 'Generate Viral Content'}
+          </Button>
+        </div>
+        {result && (
+          <div className="animate-up" style={{ marginTop:20, padding:15, borderRadius:12, background:p.bg, border:`1px solid ${p.br}`, boxShadow:'0 10px 30px rgba(0,0,0,0.1)' }}>
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>The Hook</div>
+              <div style={{ fontSize:15, fontWeight:700, color:p.ac }}>{result.hook}</div>
+            </div>
+            <div style={{ marginBottom:14 }}>
+              <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>The Caption</div>
+              <div style={{ fontSize:12, lineHeight:1.6, opacity:.8 }}>{result.caption}</div>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+              <div style={{ display:'flex', gap:6 }}>
+                {result.tags.map(t=>(
+                  <span key={t} style={{ fontSize:10, color:p.ac, fontFamily:"'Space Mono',monospace" }}>{t}</span>
+                ))}
+              </div>
+              <Button variant="ghost" onClick={sendToLineup} style={{ fontSize:11, padding:'6px 12px' }}>Copy to Lineup →</Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
       <Grid cols={2} gap={10}>
         <Card>
           <CardTitle>Editing Workflow</CardTitle>

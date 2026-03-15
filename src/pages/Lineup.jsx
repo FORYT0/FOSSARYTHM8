@@ -9,12 +9,48 @@ const PLT_COLORS={YT:'#3b82f6',TT:'#00b894',IG:'#d946ef',X:'#6366f1'}
 const blank=()=>({day:'MON',platform:'TT',title:'',status:'IDEA',time:'12:00',tags:[],views:0,likes:0,color:'#00b894'})
 
 export default function Lineup() {
-  const { palette:p, posts, addPost, updatePost, deletePost } = useStore()
+  const { palette:p, posts, trends, addPost, updatePost, deletePost } = useStore()
   const [sel, setSel] = React.useState(null)
   const [edit, setEdit] = React.useState(null)
   const [adding, setAdding] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
   const [newPost, setNewPost] = React.useState(blank())
   const [tagInput, setTagInput] = React.useState('')
+
+  async function aiRecompose() {
+    setLoading(true)
+    try {
+      // Get top trends across platforms
+      const allTrends = Object.values(trends).flat().sort((a,b)=>b.score-a.score).slice(0, 5)
+      const trendSummary = allTrends.map(t=>`${t.tag} (${t.score} score)`).join(', ')
+
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          system: 'You are a social media growth expert. Analyze the trends and suggest 3 viral post ideas. Format as JSON array of objects: [{"title": "...", "platform": "TT", "day": "WED", "tags": ["#tag1"]}]',
+          messages: [{ role: 'user', content: `Current trends: ${trendSummary}` }]
+        })
+      })
+      const data = await res.json()
+      const text = data.content?.[0]?.text || ''
+      const match = text.match(/\[.*\]/s)
+      if (match) {
+        const ideas = JSON.parse(match[0])
+        ideas.forEach(idea => {
+          addPost({
+            ...blank(),
+            ...idea,
+            color: PLT_COLORS[idea.platform] || '#888',
+            status: 'IDEA'
+          })
+        })
+        alert(`AI generated ${ideas.length} new ideas based on trends!`)
+      }
+    } catch (e) { console.error('AI Recompose failed', e) }
+    setLoading(false)
+  }
 
   const close = () => { setSel(null); setEdit(null) }
   const save = () => { updatePost(edit.id, edit); close() }
@@ -31,7 +67,12 @@ export default function Lineup() {
   return (
     <div className="animate-up">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-        <span style={{ fontSize:11, opacity:.5 }}>{posts.length} posts · {qc.Scheduled} scheduled</span>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:11, opacity:.5 }}>{posts.length} posts · {qc.Scheduled} scheduled</span>
+          <Button variant="ghost" onClick={aiRecompose} disabled={loading} style={{ border:`1px solid ${p.ac}44`, color:p.ac }}>
+            {loading ? 'Analyzing Trends...' : '✨ AI Recompose'}
+          </Button>
+        </div>
         <Button onClick={()=>setAdding(true)}>+ New Post</Button>
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:8, marginBottom:14 }}>

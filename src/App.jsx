@@ -17,7 +17,7 @@ export default function App() {
         <Route path="/studio"   element={<Studio />} />
         <Route path="/lineup"   element={<Lineup />} />
         <Route path="/ai"       element={<AIBrain />} />
-        <Route path="/stats"    element={<Stats />} />
+        <Route path="/analytics"    element={<Stats />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>

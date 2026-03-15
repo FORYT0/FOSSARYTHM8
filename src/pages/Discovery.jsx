@@ -1,149 +1,142 @@
 import React from 'react'
 import useStore from '../store'
-import { Card, CardTitle, Button, Grid, Input, Pill } from '../components/UI'
+import { Card, CardTitle, Button, Grid, Input, Pill, StatBar } from '../components/UI'
 
-const CASE_STUDIES = [
-  { id:1, title: 'The 7-Second Educational Hook', niche: 'Tech', goal: 'Reach', platform: 'TT', desc: 'A rapid-fire text overlay technique that drives 80% more retention in the first 3 seconds.', steps: ['Record 3 clips of your desk', 'Add text: "Stop doing X"', 'Overlay trending lofi track'] },
-  { id:2, title: 'Product Launch Story Loop', niche: 'Brand', goal: 'Sales', platform: 'IG', desc: 'A 4-part story sequence designed to build tension and release with a CTA.', steps: ['Ask a pain point question', 'Show the product result', 'Add a 24h countdown sticker'] },
-  { id:3, title: 'Newsletter growth carousel', niche: 'Lifestyle', goal: 'Growth', platform: 'LI', desc: '10-slide text-heavy carousel that converts cold reach into email subs.', steps: ['Identify a common myth', 'Debunk with 3 proofs', 'Slide 10: "Link in bio"'] },
-  { id:4, title: 'Contrarian Opinion Thread', niche: 'Tech', goal: 'Authority', platform: 'X', desc: 'Increase your industry authority by challenging a common belief.', steps: ['State the hot take', 'Provide 3 data points', 'Ask for counter-opinions'] },
+const EXPLORE_DATA = [
+  { id: 1, platform: 'TikTok', title: 'The "Silent Vlog" Boom', eng: '12.4%', views: '2.4M', tag: '#SilentVlog', reason: 'High retention due to ASMR elements', color: '#00b894' },
+  { id: 2, platform: 'Instagram', title: 'Geometric Minimalist Reels', eng: '8.2%', views: '840K', tag: '#Minimalist', reason: 'Strong visual hook in first 0.5s', color: '#d946ef' },
+  { id: 3, platform: 'YouTube', title: 'Setup "Deep Dives"', eng: '15.1%', views: '1.2M', tag: '#DeskSetup', reason: 'High search intent for gear specs', color: '#3b82f6' },
+  { id: 4, platform: 'TikTok', title: 'POV: You are the AI', eng: '18.7%', views: '5.1M', tag: '#AITrend', reason: 'Algorithm pushing first-person narratives', color: '#00b894' },
+  { id: 5, platform: 'Instagram', title: 'AI-Enhanced Carousels', eng: '9.4%', views: '320K', tag: '#Creators', reason: 'Saves are 3x higher than single posts', color: '#d946ef' },
 ]
 
 export default function Discovery() {
-  const { palette:p } = useStore()
-  const [step, setStep] = React.useState(0)
-  const [survey, setSurvey] = React.useState({ niche: '', goal: '' })
-  const [activeCase, setActiveCase] = React.useState(null)
-  const [aiLoading, setAiLoading] = React.useState(false)
-  const [aiGuide, setAiGuide] = React.useState(null)
+  const { palette:p, addPost } = useStore()
+  const [tab, setTab] = React.useState('All')
+  const [loading, setLoading] = React.useState(false)
+  const [scrutinyTitle, setScrutinyTitle] = React.useState('')
+  const [analysis, setAnalysis] = React.useState(null)
+  const [analyzing, setAnalyzing] = React.useState(false)
 
-  const niches = ['Tech', 'Fitness', 'Lifestyle', 'Brand', 'Creative']
-  const goals = ['Sales', 'Reach', 'Growth', 'Authority']
+  const platforms = ['All', 'TikTok', 'Instagram', 'YouTube']
+  const filtered = tab === 'All' ? EXPLORE_DATA : EXPLORE_DATA.filter(d => d.platform === tab)
 
-  const filtered = CASE_STUDIES.filter(c => 
-    (!survey.niche || c.niche === survey.niche) && 
-    (!survey.goal || c.goal === survey.goal)
-  )
-
-  async function startCreation(study) {
-    setActiveCase(study)
-    setAiLoading(true)
-    setAiGuide(null)
+  async function scrutinizeContent() {
+    if (!scrutinyTitle) return
+    setAnalyzing(true)
+    setAnalysis(null)
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
-          system: 'You are a social media director. Create 3 personalized implementation steps for the user based on the case study provided.',
-          messages: [{ role: 'user', content: `Case Study: ${study.title}. Niche: ${survey.niche || 'General'}. Goal: ${survey.goal || 'Reach'}.` }]
+          system: 'You are a professional social media editor. Scrutinize the content idea. Provide: 1. Niche, 2. Edited Feedback, 3. TikTok Caption/Audio Strategy, 4. Instagram Strategy. Keep it punchy and professional.',
+          messages: [{ role: 'user', content: `Analyze this content idea: ${scrutinyTitle}` }]
         })
       })
       const data = await res.json()
-      setAiGuide(data.content?.[0]?.text || 'Follow the standard steps to replicate success.')
+      const text = data.content?.[0]?.text || ''
+      setAnalysis(text)
     } catch (e) {
-      setAiGuide('AI guide temporarily offline. Use the standard steps below.')
+      setAnalysis('Failed to scrutinize content. Try again later.')
     }
-    setAiLoading(false)
+    setAnalyzing(false)
   }
 
-  if (step === 0) return (
-    <div className="animate-up" style={{ maxWidth:600, margin:'40px auto' }}>
-      <Card style={{ padding:30, textAlign:'center' }}>
-        <div style={{ fontSize:32, marginBottom:20 }}>🎯</div>
-        <CardTitle>Discovery Engine</CardTitle>
-        <h2 style={{ marginBottom:10 }}>What's the end goal for today?</h2>
-        <p style={{ opacity:.6, marginBottom:30, fontSize:14 }}>Answer 2 quick questions to find high-converting patterns tailored to your niche.</p>
-        
-        <div style={{ textAlign:'left', marginBottom:24 }}>
-          <div style={{ fontSize:11, fontWeight:700, opacity:.4, marginBottom:8, textTransform:'uppercase' }}>Select your Niche</div>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-            {niches.map(n => (
-              <Button key={n} variant={survey.niche===n?'primary':'ghost'} onClick={()=>setSurvey({...survey, niche:n})} style={{ fontSize:10 }}>{n}</Button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ textAlign:'left', marginBottom:30 }}>
-          <div style={{ fontSize:11, fontWeight:700, opacity:.4, marginBottom:8, textTransform:'uppercase' }}>Select your Primary Goal</div>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-            {goals.map(g => (
-              <Button key={g} variant={survey.goal===g?'primary':'ghost'} onClick={()=>setSurvey({...survey, goal:g})} style={{ fontSize:10 }}>{g}</Button>
-            ))}
-          </div>
-        </div>
-
-        <Button disabled={!survey.niche || !survey.goal} onClick={()=>setStep(1)} style={{ width:'100%', padding:14 }}>Find Patterns →</Button>
-      </Card>
-    </div>
-  )
-
   return (
-    <div className="animate-up">
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-        <div>
-          <CardTitle>Converting Patterns for {survey.niche}</CardTitle>
-          <div style={{ fontSize:12, opacity:.6 }}>Target Goal: {survey.goal}</div>
+    <div className="animate-up" style={{ display: 'flex', gap: 20, height: 'calc(100vh - 100px)' }}>
+      {/* Main Content Area */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <CardTitle>Global Explore Hub</CardTitle>
+            <div style={{ fontSize: 12, opacity: .5 }}>Trending across all platforms via F8 Engine</div>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {platforms.map(plt => (
+              <button key={plt} onClick={() => setTab(plt)}
+                style={{ background: tab === plt ? p.ac + '22' : 'transparent', border: `1px solid ${tab === plt ? p.ac : p.br}`, borderRadius: 20, padding: '5px 12px', fontSize: 11, cursor: 'pointer', color: tab === plt ? p.ac : p.tx, transition: 'all .2s' }}>
+                {plt}
+              </button>
+            ))}
+          </div>
         </div>
-        <Button variant="ghost" onClick={()=>{setStep(0); setSurvey({niche:'',goal:''})}} style={{ fontSize:10 }}>Reset Survey</Button>
+
+        <Grid cols={2} gap={14}>
+          {filtered.map(item => (
+            <Card key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: item.color }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Pill type="default" style={{ color: item.color, borderColor: item.color + '33' }}>{item.platform}</Pill>
+                <div style={{ fontSize: 10, opacity: .4, fontWeight: 700 }}>ENG: {item.eng}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: p.ac, fontFamily: "'Space Mono', monospace" }}>{item.tag}</div>
+              </div>
+              <div style={{ fontSize: 12, opacity: .7, lineHeight: 1.5 }}>{item.reason}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                <span style={{ fontSize: 11, fontWeight: 700 }}>{item.views} views</span>
+                <Button variant="ghost" style={{ fontSize: 10, padding: '4px 10px' }} onClick={() => setScrutinyTitle(item.title)}>Replicate ↴</Button>
+              </div>
+            </Card>
+          ))}
+        </Grid>
       </div>
 
-      <Grid cols={2} gap={14}>
-        {filtered.length > 0 ? filtered.map(item => (
-          <Card key={item.id} style={{ display:'flex', flexDirection:'column', gap:12 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-              <Pill type="hot">{item.platform}</Pill>
-              <div style={{ fontSize:10, opacity:.4, fontWeight:700 }}>{item.goal.toUpperCase()}</div>
-            </div>
-            <div style={{ fontSize:16, fontWeight:700 }}>{item.title}</div>
-            <div style={{ fontSize:13, opacity:.7, lineHeight:1.5 }}>{item.desc}</div>
-            <div style={{ flex:1 }} />
-            <Button onClick={()=>startCreation(item)} style={{ width:'100%' }}>Start Creation</Button>
-          </Card>
-        )) : (
-          <Card style={{ gridColumn:'1/-1', textAlign:'center', padding:40 }}>
-            <div style={{ fontSize:20, opacity:.4 }}>No exact patterns found for this combo.</div>
-            <Button variant="ghost" onClick={()=>setStep(0)} style={{ marginTop:20 }}>Try different goals</Button>
-          </Card>
-        )}
-      </Grid>
+      {/* AI Scrutinizer Sidebar */}
+      <div style={{ width: 320, flexShrink: 0 }}>
+        <Card style={{ height: '100%', display: 'flex', flexDirection: 'column', background: p.bg2 + 'cc', backdropFilter: 'blur(20px)', border: `1px solid ${p.ac}11` }}>
+          <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🔍</span> AI Scrutinizer
+          </CardTitle>
+          <div style={{ fontSize: 11, opacity: .5, marginBottom: 16 }}>Drop an idea or image link to get pro-grade feedback.</div>
+          
+          <div style={{ marginBottom: 16 }}>
+            <Input 
+              value={scrutinyTitle} 
+              onChange={e => setScrutinyTitle(e.target.value)} 
+              placeholder="Enter content idea or paste link..."
+              style={{ background: p.bg, border: `1px solid ${p.br}`, fontSize: 11 }}
+            />
+            <Button 
+              onClick={scrutinizeContent} 
+              disabled={analyzing || !scrutinyTitle} 
+              style={{ width: '100%', marginTop: 8, background: p.ac, color: p.bg }}>
+              {analyzing ? 'Scrutinizing...' : 'Scrutinize Content'}
+            </Button>
+          </div>
 
-      {activeCase && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', backdropFilter:'blur(10px)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', padding:20, animation:'fadeIn .3s' }}>
-          <Card style={{ width:'100%', maxWidth:500, background:p.bg, border:`1px solid ${p.ac}33`, animation:'slideUp .4s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:20 }}>
-               <CardTitle>AI Guided Integration</CardTitle>
-               <button onClick={()=>setActiveCase(null)} style={{ background:'none', border:'none', color:p.tx, cursor:'pointer', fontSize:20, opacity:.3 }}>✕</button>
-             </div>
-             
-             <div style={{ marginBottom:20 }}>
-               <div style={{ fontSize:18, fontWeight:700, color:p.ac, marginBottom:6 }}>{activeCase.title}</div>
-               <div style={{ fontSize:12, opacity:.6 }}>Replicating this pattern for your {survey.niche} niche.</div>
-             </div>
+          <div style={{ flex: 1, overflowY: 'auto', background: p.bg + '66', borderRadius: 12, padding: 12, border: `1px solid ${p.br}` }}>
+            {analysis ? (
+              <div className="animate-up" style={{ fontSize: 12, lineHeight: 1.6 }}>
+                <div style={{ whiteSpace: 'pre-wrap' }}>{analysis}</div>
+              </div>
+            ) : analyzing ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="pulse" style={{ height: 14, background: p.br, borderRadius: 4, width: i === 4 ? '60%' : '100%' }} />
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', marginTop: 40, opacity: .3 }}>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>⚡</div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>Waiting for Input</div>
+              </div>
+            )}
+          </div>
 
-             <div style={{ background:p.bg2, borderRadius:12, padding:15, border:`1px solid ${p.br}`, marginBottom:20 }}>
-               <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:10, textTransform:'uppercase', letterSpacing:1 }}>AI Expert Strategy</div>
-               {aiLoading ? (
-                 <div className="pulse" style={{ fontSize:13, opacity:.8 }}>AI is architecting your workflow...</div>
-               ) : (
-                 <div style={{ fontSize:13, lineHeight:1.6, opacity:.9 }}>{aiGuide}</div>
-               )}
-             </div>
-
-             <div style={{ marginBottom:24 }}>
-               <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:12, textTransform:'uppercase', letterSpacing:1 }}>Execution Steps</div>
-               {activeCase.steps.map((s,i) => (
-                 <div key={i} style={{ display:'flex', gap:10, marginBottom:8 }}>
-                   <div style={{ width:18, height:18, borderRadius:'50%', background:p.ac, color:p.bg, fontSize:10, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{i+1}</div>
-                   <div style={{ fontSize:12, opacity:.8 }}>{s}</div>
-                 </div>
-               ))}
-             </div>
-
-             <Button onClick={()=>setActiveCase(null)} style={{ width:'100%' }}>I'm On It</Button>
-          </Card>
-        </div>
-      )}
+          {analysis && (
+            <Button variant="ghost" style={{ width: '100%', marginTop: 12, fontSize: 10 }} onClick={() => {
+              addPost({ title: scrutinyTitle, platform: 'TT', day: 'MON', status: 'IDEA', time: '12:00', tags: ['#Scrutinized'], color: '#00b894' })
+              alert('Added to Lineup as a DRAFT!')
+            }}>
+              Send Report to Lineup
+            </Button>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }

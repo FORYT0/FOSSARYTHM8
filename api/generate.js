@@ -13,9 +13,9 @@ export default async function handler(req) {
 
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
 
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Missing GEMINI_API_KEY environment variable on Vercel.' }), {
+    return new Response(JSON.stringify({ error: 'Missing GROQ_API_KEY environment variable on Vercel.' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
@@ -24,46 +24,44 @@ export default async function handler(req) {
   try {
     const { messages, model, system } = await req.json()
     
-    // Convert Claude-style messages to Gemini format
-    const contents = messages.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }]
-    }))
+    // Prepare Groq payload (OpenAI compatible)
+    const payload = {
+      model: model || 'llama-3.3-70b-versatile',
+      messages: [
+        ...(system ? [{ role: 'system', content: system }] : []),
+        ...messages
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    }
 
-    // Use v1beta for better model compatibility (system instructions supported)
-    const modelId = model || 'gemini-2.0-flash'
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`
-
-    const response = await fetch(url, {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        system_instruction: system ? { parts: [{ text: system }] } : undefined,
-        generationConfig: {
-          maxOutputTokens: 1000,
-          temperature: 0.7,
-        }
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
     })
 
     const data = await response.json()
     
     if (!response.ok) {
-      return new Response(JSON.stringify({ error: data.error?.message || 'Gemini API error' }), {
+      return new Response(JSON.stringify({ error: data.error?.message || 'Groq API error' }), {
         status: response.status,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       })
     }
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.'
+    const text = data.choices?.[0]?.message?.content || 'No response received.'
     
+    // Maintain identical response structure for frontend compatibility
     return new Response(JSON.stringify({ content: [{ text }] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Internal server error processing request.' }), {
+    return new Response(JSON.stringify({ error: `Internal server error: ${err.message}` }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     })

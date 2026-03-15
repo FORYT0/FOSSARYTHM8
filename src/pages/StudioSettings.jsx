@@ -81,7 +81,7 @@ export function Settings() {
           </Card>
           <Card>
             <CardTitle>AI Model</CardTitle>
-            {[['Fast','gemini-2.0-flash','Fastest, lower cost'],['Balanced','gemini-2.0-flash-lite','Efficient & fast'],['Max','gemini-2.0-pro','Highest quality']].map(([tier,model,desc],i)=>(
+            {[['Fast','llama-3.1-8b-instant','Ultra-fast response'],['Balanced','llama-3.3-70b-versatile','Best quality/speed balance'],['Max','deepseek-v3','Deep reasoning (if available)'].slice(0,2)].concat([['Stable','llama-3.1-70b-versatile','Proven reliability']]).slice(0,3).map(([tier,model,desc],i)=>(
               <div key={tier} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 0', borderBottom:i<2?`1px solid ${p.br}`:'none' }}>
                 <div style={{ flex:1 }}><div style={{ fontSize:12, fontWeight:600 }}>{tier} <span style={{ fontSize:10, opacity:.4, fontFamily:"'Space Mono',monospace" }}>· {model}</span></div><div style={{ fontSize:10, opacity:.4, marginTop:2 }}>{desc}</div></div>
                 <div style={{ width:16, height:16, borderRadius:'50%', border:`2px solid ${p.ac}`, background:i===1?p.ac:'transparent', flexShrink:0, cursor:'pointer' }} />

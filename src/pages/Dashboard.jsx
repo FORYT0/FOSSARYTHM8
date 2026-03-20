@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store'
 import { Card, CardTitle, MetricCard, Pill, Grid, TrendSparkline } from '../components/UI'
+import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 
 export default function Dashboard() {
   const { palette:p, trends, posts, analytics, setSelectedTrend } = useStore()
@@ -153,21 +154,29 @@ export default function Dashboard() {
           <div onClick={() => nav('/lineup')} style={{ marginTop:8, fontSize:11, color:p.ac, cursor:'pointer', opacity:.7, textAlign:'center' }}>View full lineup →</div>
         </Card>
 
-        <Card>
+        <Card style={{ paddingBottom: 10 }}>
           <CardTitle>This Week's Reach</CardTitle>
-          <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:100, paddingTop:10 }}>
-            {analytics.weekly.map(d => {
-              const max = Math.max(...analytics.weekly.map(x=>x.reach))
-              const h = Math.round((d.reach/max)*90)
-              return (
-                <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                  <div style={{ width:'100%', height:h, borderRadius:'3px 3px 0 0', background:p.ac, opacity:.7 }} />
-                  <span style={{ fontSize:9, opacity:.3, fontFamily:"'Space Mono',monospace" }}>{d.day[0]}</span>
-                </div>
-              )
-            })}
+          <div style={{ height: 110, marginTop: 10, position: 'relative', left: -10 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics.weekly}>
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tickFormatter={v=>v[0]} tick={{ fill:p.tx, opacity:.4, fontSize:9, fontFamily:"'Space Mono',monospace" }} />
+                <Tooltip 
+                  cursor={{ fill: p.ac+'11' }}
+                  content={({ active, payload, label }) => {
+                    if (!active||!payload?.length) return null
+                    return (
+                      <div style={{ background:p.bg2, border:`1px solid ${p.br}`, borderRadius:8, padding:'8px 12px', fontSize:11 }}>
+                        <div style={{ fontFamily:"'Space Mono',monospace", opacity:.5, marginBottom:4 }}>{label}</div>
+                        <div style={{ color:p.ac, marginBottom:2 }}>Reach: <strong>{payload[0].value.toLocaleString()}</strong></div>
+                      </div>
+                    )
+                  }}
+                />
+                <Bar dataKey="reach" fill={p.ac} radius={[3,3,0,0]} opacity={0.8} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <div onClick={() => nav('/stats')} style={{ marginTop:8, fontSize:11, color:p.ac, cursor:'pointer', opacity:.7, textAlign:'center' }}>Full analytics →</div>
+          <div onClick={() => nav('/stats')} style={{ marginTop:8, fontSize:11, color:p.ac, cursor:'pointer', opacity:.7, textAlign:'center', transition:'opacity .2s' }} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=.7}>Full analytics →</div>
         </Card>
       </Grid>
     </div>

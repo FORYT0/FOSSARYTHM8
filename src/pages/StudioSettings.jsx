@@ -35,8 +35,10 @@ export function Studio() {
       // Extract JSON from response (handling potential non-json extras)
       const text = data.content?.[0]?.text || ''
       const match = text.match(/\{.*\}/s)
-      if (match) setResult(JSON.parse(match[0]))
-      else setResult({ hook: 'Error parsing response', caption: text, tags: [] })
+      if (match) {
+        try { setResult(JSON.parse(match[0])) }
+        catch(internalErr) { setResult({ hook: 'Error parsing JSON', caption: text, tags: [] }) }
+      } else setResult({ hook: 'No JSON found', caption: text, tags: [] })
     } catch (e) {
       setResult({ hook: 'Error', caption: 'Failed to generate content. Check console.', tags: [] })
     }
@@ -78,23 +80,38 @@ export function Studio() {
           </Button>
         </div>
         {result && (
-          <div className="animate-up" style={{ marginTop:20, padding:15, borderRadius:12, background:p.bg, border:`1px solid ${p.br}`, boxShadow:'0 10px 30px rgba(0,0,0,0.1)' }}>
-            <div style={{ marginBottom:14 }}>
-              <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>The Hook</div>
-              <div style={{ fontSize:15, fontWeight:700, color:p.ac }}>{result.hook}</div>
-            </div>
-            <div style={{ marginBottom:14 }}>
-              <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>The Caption</div>
-              <div style={{ fontSize:12, lineHeight:1.6, opacity:.8 }}>{result.caption}</div>
-            </div>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
-              <div style={{ display:'flex', gap:6 }}>
-                {result.tags.map(t=>(
-                  <span key={t} style={{ fontSize:10, color:p.ac, fontFamily:"'Space Mono',monospace" }}>{t}</span>
-                ))}
+          <div className="animate-up" style={{ marginTop:20, padding:20, borderRadius:16, background:p.bg, border:`1px solid ${p.br}`, boxShadow:`0 10px 40px ${p.ac}11` }}>
+            <Grid cols={2} gap={20}>
+              <div style={{ display:'flex', flexDirection:'column', justifyContent:'center' }}>
+                <div style={{ marginBottom:14 }}>
+                  <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>The Hook</div>
+                  <div style={{ fontSize:16, fontWeight:700, color:p.ac, lineHeight:1.4 }}>{result.hook}</div>
+                </div>
+                <div style={{ marginBottom:14 }}>
+                  <div style={{ fontSize:10, fontWeight:700, opacity:.4, marginBottom:4, textTransform:'uppercase', letterSpacing:1 }}>The Caption</div>
+                  <div style={{ fontSize:12, lineHeight:1.6, opacity:.8 }}>{result.caption}</div>
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:20 }}>
+                  {result.tags.map(t=>(
+                    <span key={t} style={{ fontSize:10, padding:'3px 8px', borderRadius:4, background:p.ac+'11', color:p.ac, fontFamily:"'Space Mono',monospace" }}>{t}</span>
+                  ))}
+                </div>
+                <Button onClick={sendToLineup} style={{ fontSize:12, width:'100%', padding:'10px' }}>Schedule Content →</Button>
               </div>
-              <Button variant="ghost" onClick={sendToLineup} style={{ fontSize:11, padding:'6px 12px' }}>Copy to Lineup →</Button>
-            </div>
+              <div style={{ display:'flex', justifyContent:'center' }}>
+                <div style={{ width: 180, height: 320, borderRadius: 24, border: `4px solid ${p.br}`, background: '#000', position: 'relative', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                  <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 60, height: 12, background: p.br, borderBottomLeftRadius: 8, borderBottomRightRadius: 8, zIndex: 10 }} />
+                  <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.8) 100%), ${p.ac}33`, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 12 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#fff', marginBottom: 4 }}>@fossarythm8</div>
+                    <div style={{ fontSize: 9, color: '#ddd', marginBottom: 6, lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{result.caption}</div>
+                    <div style={{ display:'flex', gap:4, overflow:'hidden' }}>{result.tags.slice(0,2).map(t=><span key={t} style={{ fontSize:8, color:'#fff', fontWeight:600 }}>{t}</span>)}</div>
+                  </div>
+                  <div style={{ position:'absolute', bottom:20, right:10, display:'flex', flexDirection:'column', gap:10 }}>
+                    {[1,2,3].map(i=><div key={i} style={{ width:20, height:20, borderRadius:'50%', background:'rgba(255,255,255,0.2)' }}/>)}
+                  </div>
+                </div>
+              </div>
+            </Grid>
           </div>
         )}
       </Card>
@@ -142,11 +159,10 @@ export function Studio() {
 }
 
 export function Settings() {
-  const { palette:p } = useStore()
-  const [tog, setTog] = React.useState({trends:true,reminders:true,insights:false,warnings:true,auto:false,optimal:true})
+  const { palette:p, settings:tog, updateSetting } = useStore()
   const T = ({k}) => {
     const on=tog[k]
-    return <div onClick={()=>setTog(t=>({...t,[k]:!t[k]}))} style={{ width:32, height:18, borderRadius:9, background:on?p.ac:p.br, position:'relative', cursor:'pointer', transition:'background .2s', flexShrink:0 }}><div style={{ width:14, height:14, borderRadius:'50%', background:'#fff', position:'absolute', top:2, transition:'all .2s', left:on?'auto':2, right:on?2:'auto' }} /></div>
+    return <div onClick={()=>updateSetting(k,!on)} style={{ width:32, height:18, borderRadius:9, background:on?p.ac:p.br, position:'relative', cursor:'pointer', transition:'background .2s', flexShrink:0 }}><div style={{ width:14, height:14, borderRadius:'50%', background:'#fff', position:'absolute', top:2, transition:'all .2s', left:on?'auto':2, right:on?2:'auto' }} /></div>
   }
   return (
     <div className="animate-up">

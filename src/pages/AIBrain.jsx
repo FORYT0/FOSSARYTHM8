@@ -5,10 +5,40 @@ import { Card, CardTitle, Button, Input, Spinner, Grid } from '../components/UI'
 const SYS = `You are FOSSARYTHM8's AI content intelligence engine — a sharp, data-driven social media strategist specializing in YouTube, TikTok, Instagram, and X/Twitter algorithms. Give specific, actionable advice. Be concise. Max 4 sentences unless asked for more.`
 const QUICK = ['Best hook structure for TikTok in 2025?','Score my idea: daily AI news roundup on YouTube','Instagram carousel vs Reel — which wins right now?','How do I go viral on YouTube Shorts?','Best hashtags for a productivity video?','Best time to post on X for tech audience?']
 
+const TypewriterMessage = ({ content, isLast, role, p }) => {
+  const [displayed, setDisplayed] = React.useState('')
+  const [done, setDone] = React.useState(!isLast || role==='user')
+  
+  React.useEffect(() => {
+    if (!done) {
+      let i = 0; setDisplayed('')
+      const timer = setInterval(() => {
+        setDisplayed(content.slice(0, i+1))
+        i++
+        if (i >= content.length) { clearInterval(timer); setDone(true) }
+      }, 10) // fast typing
+      return () => clearInterval(timer)
+    } else setDisplayed(content)
+  }, [content, done])
+
+  const formatText = (text) => text.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} style={{ color: p.ac, fontWeight:700 }}>{part.slice(2,-2)}</strong>
+    return <span key={i}>{part}</span>
+  })
+
+  return (
+    <div style={{ padding:'10px 13px', borderRadius:10, fontSize:12, lineHeight:1.6, alignSelf:role==='user'?'flex-end':'flex-start', maxWidth:'88%', background:role==='user'?p.ac+'22':p.bg, border:`1px solid ${role==='user'?p.ac+'33':p.br}`, whiteSpace:'pre-wrap', animation:'slideUp .2s ease' }}>
+      {formatText(displayed)}
+      {!done && <span style={{display:'inline-block', width:4, height:12, background:p.ac, marginLeft:4, animation:'pulse 1s infinite opacity'}}/>}
+    </div>
+  )
+}
+
 export default function AIBrain() {
   const { palette:p, chatHistory, addChatMessage, clearChat } = useStore()
   const [input, setInput] = React.useState('')
   const [loading, setLoading] = React.useState(false)
+  const [confirmClear, setConfirmClear] = React.useState(false)
   const [scoreInput, setScoreInput] = React.useState('')
   const [scoreResult, setScoreResult] = React.useState('')
   const [scoreLoading, setScoreLoading] = React.useState(false)
@@ -62,12 +92,19 @@ export default function AIBrain() {
           <Card style={{ flex:1, display:'flex', flexDirection:'column', height:'100%' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
               <CardTitle>AI Content Brain</CardTitle>
-              {chatHistory.length>0 && <button onClick={clearChat} style={{ fontSize:10, opacity:.4, background:'none', border:'none', color:p.tx, cursor:'pointer' }}>Clear</button>}
+              {chatHistory.length>0 && !confirmClear && <button onClick={()=>setConfirmClear(true)} style={{ fontSize:10, opacity:.4, background:'none', border:'none', color:p.tx, cursor:'pointer', transition:'opacity .2s' }} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=.4}>Clear Memory</button>}
+              {confirmClear && (
+                <div style={{ display:'flex', gap:6 }}>
+                  <span style={{ fontSize:10, color:p.tx, opacity:.6, marginTop:2 }}>Are you sure?</span>
+                  <button onClick={()=>{clearChat();setConfirmClear(false)}} style={{ fontSize:10, color:'#e63946', background:'none', border:'none', cursor:'pointer' }}>Yes</button>
+                  <button onClick={()=>setConfirmClear(false)} style={{ fontSize:10, color:p.tx, opacity:.8, background:'none', border:'none', cursor:'pointer' }}>No</button>
+                </div>
+              )}
             </div>
             <div ref={msgsRef} style={{ flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:8, paddingRight:4, minHeight:0 }}>
               {chatHistory.length===0 && <div style={{ padding:'10px 13px', borderRadius:10, fontSize:12, lineHeight:1.6, background:p.bg, border:`1px solid ${p.br}`, alignSelf:'flex-start', maxWidth:'88%' }}>Hey — I'm FOSSARYTHM8's AI engine. I analyze platform algorithms, score ideas, and build strategies in real time. What are we working on?</div>}
               {chatHistory.map((msg,i) => (
-                <div key={i} style={{ padding:'10px 13px', borderRadius:10, fontSize:12, lineHeight:1.6, alignSelf:msg.role==='user'?'flex-end':'flex-start', maxWidth:'88%', background:msg.role==='user'?p.ac+'22':p.bg, border:`1px solid ${msg.role==='user'?p.ac+'33':p.br}`, whiteSpace:'pre-wrap', animation:'slideUp .2s ease' }}>{msg.content}</div>
+                <TypewriterMessage key={i} content={msg.content} role={msg.role} isLast={i===chatHistory.length-1} p={p} />
               ))}
               {loading && <div style={{ padding:'10px 13px', borderRadius:10, background:p.bg, border:`1px solid ${p.br}`, alignSelf:'flex-start', display:'flex', alignItems:'center', gap:8 }}><Spinner /><span style={{ fontSize:11, opacity:.5 }}>Analyzing...</span></div>}
             </div>

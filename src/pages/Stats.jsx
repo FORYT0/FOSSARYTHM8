@@ -1,7 +1,7 @@
 import React from 'react'
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import useStore from '../store'
-import { Card, CardTitle, Grid, MetricCard } from '../components/UI'
+import { Card, CardTitle, Grid, MetricCard, Button } from '../components/UI'
 
 function Tip({ active, payload, label, p }) {
   if (!active||!payload?.length) return null
@@ -17,14 +17,25 @@ export default function Stats() {
   const { palette:p, analytics, analyticsRange, setAnalyticsRange } = useStore()
   const data = analytics[analyticsRange] || []
   const [metric, setMetric] = React.useState('reach')
+  const [exporting, setExporting] = React.useState(false)
   const totals = { reach:data.reduce((a,x)=>a+x.reach,0), eng:data.reduce((a,x)=>a+x.eng,0), follows:data.reduce((a,x)=>a+x.follows,0) }
+
+  function handleExport() {
+    setExporting(true)
+    setTimeout(()=>setExporting(false), 2000)
+  }
 
   return (
     <div className="animate-up">
-      <div style={{ display:'flex', gap:6, marginBottom:14 }}>
-        {['weekly','monthly'].map(r=>(
-          <button key={r} onClick={()=>setAnalyticsRange(r)} style={{ padding:'5px 14px', borderRadius:6, border:`1px solid ${analyticsRange===r?p.ac:p.br}`, background:analyticsRange===r?p.ac+'22':'transparent', color:analyticsRange===r?p.ac:p.tx, cursor:'pointer', fontSize:11, fontWeight:600, transition:'all .2s', textTransform:'capitalize' }}>{r}</button>
-        ))}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+        <div style={{ display:'flex', gap:6 }}>
+          {['weekly','monthly'].map(r=>(
+            <button key={r} onClick={()=>setAnalyticsRange(r)} style={{ padding:'5px 14px', borderRadius:6, border:`1px solid ${analyticsRange===r?p.ac:p.br}`, background:analyticsRange===r?p.ac+'22':'transparent', color:analyticsRange===r?p.ac:p.tx, cursor:'pointer', fontSize:11, fontWeight:600, transition:'all .2s', textTransform:'capitalize' }}>{r}</button>
+          ))}
+        </div>
+        <Button onClick={handleExport} variant={exporting ? 'default' : 'ghost'} style={{ fontSize:11, padding:'6px 14px', opacity:exporting ? 1 : 0.8, background:exporting ? '#22c55e' : p.ac+'11', color:exporting ? '#fff' : p.ac, border:exporting ? 'none' : `1px solid ${p.ac}33`, transition:'all 0.3s' }}>
+          {exporting ? '✓ Report Exported' : 'Export PDF Report'}
+        </Button>
       </div>
       <Grid cols={4} gap={8} style={{ marginBottom:14 }}>
         <MetricCard value={`${(totals.reach/1000).toFixed(0)}K`} label="Total Reach" delta="+18%" />

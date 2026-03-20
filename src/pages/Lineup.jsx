@@ -61,6 +61,8 @@ export default function Lineup() {
     setData(d => ({ ...d, tags:[...(d.tags||[]), t.startsWith('#')?t:`#${t}`] }))
     setTagInput('')
   }
+  const nextStatus = edit?.status === 'IDEA' ? 'DRAFT' : edit?.status === 'DRAFT' ? 'SCHED' : edit?.status === 'SCHED' ? 'LIVE' : edit?.status === 'LIVE' ? 'DONE' : null;
+  const saveAdvance = () => { updatePost(edit.id, {...edit, status:nextStatus}); close() }
 
   const qc = { Scheduled:posts.filter(x=>x.status==='SCHED').length, Draft:posts.filter(x=>x.status==='DRAFT').length, Ideas:posts.filter(x=>x.status==='IDEA').length, Live:posts.filter(x=>x.status==='LIVE').length }
 
@@ -159,6 +161,7 @@ export default function Lineup() {
             <div style={{ display:'flex', gap:8 }}>
               <Button onClick={del} variant="danger">Delete</Button>
               <Button onClick={close} variant="ghost" style={{ flex:1 }}>Cancel</Button>
+              {nextStatus && <Button onClick={saveAdvance} variant="ghost" style={{ flex:1, border:`1px solid ${p.ac}44`, color:p.ac }}>→ {nextStatus}</Button>}
               <Button onClick={save} style={{ flex:1 }}>Save</Button>
             </div>
           </div>

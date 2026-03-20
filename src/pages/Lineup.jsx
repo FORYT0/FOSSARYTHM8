@@ -138,6 +138,18 @@ export default function Lineup() {
                 <Button onClick={()=>addTag(edit,setEdit)} variant="ghost">Add</Button>
               </div>
             </div>
+            {edit.img && (
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:10, opacity:.4, marginBottom:8, textTransform:'uppercase' }}>Graded Asset Preview</div>
+                <img src={edit.img} style={{ width:'100%', height:200, objectFit:'cover', borderRadius:12, border:`1px solid ${p.br}` }} alt="Preview" />
+              </div>
+            )}
+            {edit.strategy && (
+              <div style={{ marginBottom:14 }}>
+                <div style={{ fontSize:10, opacity:.4, marginBottom:8, textTransform:'uppercase' }}>Intelligence Report</div>
+                <div style={{ padding:14, borderRadius:8, background:p.bg2, border:`1px solid ${p.br}`, fontSize:11, lineHeight:1.6, color:'#aaa', whiteSpace:'pre-wrap' }}>{edit.strategy}</div>
+              </div>
+            )}
             {(edit.views>0||edit.likes>0) && (
               <Grid cols={2} gap={8} style={{ marginBottom:12 }}>
                 <div style={{ padding:10, borderRadius:8, background:p.bg, border:`1px solid ${p.br}`, textAlign:'center' }}><div style={{ fontFamily:"'Space Mono',monospace", fontSize:16, fontWeight:700, color:p.ac }}>{edit.views.toLocaleString()}</div><div style={{ fontSize:10, opacity:.4, marginTop:2 }}>Views</div></div>
